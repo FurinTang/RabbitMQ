@@ -43,17 +43,17 @@ class RabbitMQServer:
             # 创建连接和信道
             self.connection = pika.BlockingConnection(parameters)
             self.channel = self.connection.channel()
-            print("✅ RabbitMQ 生产者连接成功！")
+            print("RabbitMQ 生产者连接成功！")
         except AMQPConnectionError as e:
-            print(f"❌ RabbitMQ 生产者连接失败：{str(e)}")
+            print(f"RabbitMQ 生产者连接失败：{str(e)}")
             raise e
         except Exception as e:
-            print(f"❌ RabbitMQ 生产者未知连接异常:{str(e)}")
+            print(f"RabbitMQ 生产者未知连接异常:{str(e)}")
             raise e
 
     # 重连
     def _reconnect(self):
-        print("⚠️ RabbitMQ连接断开，开始自动重连...")
+        print("RabbitMQ连接断开，开始自动重连...")
         self.connection = None
         self.channel = None
         self._create_connection()
@@ -62,9 +62,9 @@ class RabbitMQServer:
     def declare_queue(self, queue_name : str, durable : bool=True):
         try:
             self.channel.queue_declare(queue=queue_name, durable=durable, auto_delete=False, exclusive=False)   # auto_delete=False持久化队列，exclusive=False保证其它连接也可看见队列
-            print(f"✅ 队列声明成功：{queue_name}  队列持久{durable}")
+            print(f"队列声明成功：{queue_name}  队列持久{durable}")
         except AMQPChannelError as e:
-            print(f"❌ 队列声明失败：{str(e)},开始重试")
+            print(f"队列声明失败：{str(e)},开始重试")
             self._reconnect()
             self.channel.queue_declare(queue=queue_name, durable=durable, auto_delete=False, exclusive=False)
 
@@ -79,9 +79,9 @@ class RabbitMQServer:
                                           exchange_type=exchange_type,
                                           durable=durable
                                           )
-            print(f"✅ 交换机声明成功：{exchange_name}  类型={exchange_type}  持久={durable}")
+            print(f"交换机声明成功：{exchange_name}  类型={exchange_type}  持久={durable}")
         except AMQPChannelError as e:
-            print(f"❌ 交换机声明失败：{str(e)},开始重试")
+            print(f"交换机声明失败：{str(e)},开始重试")
             self._reconnect()
             self.channel.exchange_declare(exchange=exchange_name, exchange_type=exchange_type, durable=durable)
 
@@ -95,9 +95,9 @@ class RabbitMQServer:
             # 先声明队列再绑定
             self.declare_queue(queue_name)
             self.channel.queue_bind(queue=queue_name, exchange=exchange_name)
-            print(f"✅ 绑定成功：队列[{queue_name}] → 交换机[{exchange_name}]  路由键={routing_key}")
+            print(f"绑定成功：队列[{queue_name}] → 交换机[{exchange_name}]  路由键={routing_key}")
         except AMQPChannelError as e:
-            print(f"❌ 队列绑定失败：{str(e)},开始重试")
+            print(f"队列绑定失败：{str(e)},开始重试")
             self._reconnect()
             self.channel.queue_bind(queue=queue_name, exchange=exchange_name, routing_key=routing_key)
 
@@ -141,15 +141,15 @@ class RabbitMQServer:
                                        body=message,
                                        properties=pika.BasicProperties(delivery_mode=2 if durable_msg else 1)
                                        )
-            print(f"📤 消息发送成功 -> 队列[{queue_name}]：{message}")
+            print(f"消息发送成功 -> 队列[{queue_name}]：{message}")
 
         except AMQPChannelError as e:
-            print(f"❌ 消息发送失败：{str(e)}")
+            print(f"消息发送失败：{str(e)}")
             self._reconnect()  # 连接/信道异常，重连后重试发送
             self.send_message(queue_name, message, exchange, routing_key, durable_msg)
 
         except Exception as e:
-            print(f"❌ 消息发送未知异常：{str(e)}")
+            print(f"消息发送未知异常：{str(e)}")
             raise e
 
 
@@ -168,10 +168,10 @@ class RabbitMQServer:
                                        on_message_callback=callback_func,
                                        auto_ack=auto_ack
                                        )
-            print(f"📥 开始监听队列 -> [{queue_name}]，等待消息...")
+            print(f"开始监听队列 -> [{queue_name}]，等待消息...")
             self.channel.start_consuming()
         except AMQPChannelError as e:
-            print(f"❌ 消费消息异常：{str(e)}")
+            print(f"消费消息异常：{str(e)}")
             # 异常重连后继续消费
             self._reconnect()
             self.consume_message(queue_name, callback_func, auto_ack)
@@ -179,9 +179,9 @@ class RabbitMQServer:
             # 手动终止程序时优雅退出
             self.channel.stop_consuming()
             self.close()
-            print("✅ 消费者手动终止，优雅退出")
+            print("消费者手动终止，优雅退出")
         except Exception as e:
-            print(f"❌ 消费未知异常：{str(e)}")
+            print(f"消费未知异常：{str(e)}")
             raise e
 
 
@@ -192,8 +192,9 @@ class RabbitMQServer:
     def close(self):
         if self.connection and not self.connection.is_closed:
             self.connection.close()
-            print("✅ RabbitMQ 消费者连接已关闭")
+            print("RabbitMQ 连接已关闭")
         if self.channel and not self.channel.is_closed:
             self.channel.close()
-            print("✅ RabbitMQ 消费者通道已关闭")
+            print("RabbitMQ 通道已关闭")
+
 
