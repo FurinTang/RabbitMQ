@@ -1,0 +1,3 @@
+使用python封装RabbitMQ的基础操作
+涵盖了Direct Topic Fanout三种交换机
+测试代码由ai生成
